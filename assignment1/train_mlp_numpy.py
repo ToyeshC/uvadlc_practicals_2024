@@ -53,7 +53,9 @@ def accuracy(predictions, targets):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-
+    pred_labels = np.argmax(predictions, axis=1)
+    correct = (pred_labels == targets).astype(np.float32)
+    accuracy = np.mean(correct)
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -81,7 +83,15 @@ def evaluate_model(model, data_loader):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-
+    total_correct = 0
+    total_samples = 0
+    for batch in tqdm(data_loader['validation'], desc="Evaluating"):
+        X, y = batch
+        probs = model.forward(X)
+        acc = accuracy(probs, y)
+        total_correct += acc * X.shape[0]
+        total_samples += X.shape[0]
+    avg_accuracy = total_correct / total_samples
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -133,16 +143,65 @@ def train(hidden_dims, lr, batch_size, epochs, seed, data_dir):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
+    train_loader = cifar10_loader['train']
+    validation_loader = cifar10_loader['validation']
+    test_loader = cifar10_loader['test']
 
-    # TODO: Initialize model and loss module
-    model = ...
-    loss_module = ...
-    # TODO: Training loop including validation
-    val_accuracies = ...
-    # TODO: Test best model
-    test_accuracy = ...
-    # TODO: Add any information you might want to save for plotting
-    logging_dict = ...
+    model = MLP(n_inputs=3072, n_hidden=hidden_dims, n_classes=10)  # CIFAR10 images are 32x32x3=3072
+    loss_module = CrossEntropyModule()
+
+    val_accuracies = []
+    best_val_accuracy = 0.0
+    best_model = deepcopy(model)
+    logging_dict = {'epoch': [], 'val_accuracy': [], 'train_loss': []}
+
+    for epoch in range(epochs):
+        model.clear_cache()
+        epoch_loss = 0.0
+
+        for batch in tqdm(train_loader, desc=f"Training Epoch {epoch+1}/{epochs}"):
+            X, y = batch
+            logits = model.forward(X)
+            loss = loss_module.forward(logits, y)
+            epoch_loss += loss
+            dout = loss_module.backward(logits, y)
+            model.backward(dout)
+
+            for layer in model.layers:
+                for param_name in ['weight', 'bias']:
+                    if param_name in layer.params:
+                        layer.params[param_name] -= lr * layer.grads[param_name]
+
+            model.clear_cache()
+
+        avg_epoch_loss = epoch_loss / len(train_loader)
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_epoch_loss:.4f}")
+        logging_dict['epoch'].append(epoch+1)
+        logging_dict['train_loss'].append(avg_epoch_loss)
+
+        val_acc = evaluate_model(model, cifar10_loader)
+        val_accuracies.append(val_acc)
+        logging_dict['val_accuracy'].append(val_acc)
+
+        print(f"Validation Accuracy: {val_acc * 100:.2f}%")
+
+        if val_acc > best_val_accuracy:
+            best_val_accuracy = val_acc
+            best_model = deepcopy(model)
+
+    test_correct = 0
+    test_total = 0
+    for batch in tqdm(test_loader, desc="Testing"):
+        X, y = batch
+        probs = best_model.forward(X)
+        acc = accuracy(probs, y)
+        test_correct += acc * X.shape[0]
+        test_total += X.shape[0]
+    test_accuracy = test_correct / test_total
+
+    print(f"Test Accuracy of Best Model: {test_accuracy * 100:.2f}%")
+
+    model = best_model 
     #######################
     # END OF YOUR CODE    #
     #######################

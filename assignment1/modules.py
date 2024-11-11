@@ -50,7 +50,10 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        self.params['weight'] = np.random.randn(in_features, out_features) * np.sqrt(2. / in_features)
+        self.params['bias'] = np.zeros(out_features)
+        self.grads['weight'] = np.zeros_like(self.params['weight'])
+        self.grads['bias'] = np.zeros_like(self.params['bias'])
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -73,7 +76,8 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        self.x = x
+        out = np.dot(x, self.params['weight']) + self.params['bias']
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -93,11 +97,13 @@ class LinearModule(object):
         Implement backward pass of the module. Store gradient of the loss with respect to
         layer parameters in self.grads['weight'] and self.grads['bias'].
         """
-
+         
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        dx = np.dot(dout, self.params['weight'].T)
+        self.grads['weight'] = np.dot(self.x.T, dout)
+        self.grads['bias'] = np.sum(dout, axis=0)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -114,7 +120,7 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.x = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -146,7 +152,8 @@ class ELUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        self.x = x
+        out = np.where(x > 0, x, self.alpha * (np.exp(x) - 1))
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -168,7 +175,7 @@ class ELUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        dx = dout * np.where(self.x > 0, 1, self.alpha * np.exp(self.x))
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -185,7 +192,7 @@ class ELUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.x = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -214,7 +221,10 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        shifted_x = x - np.max(x, axis=1, keepdims=True)
+        exp_x = np.exp(shifted_x)
+        self.out = exp_x / np.sum(exp_x, axis=1, keepdims=True)
+        out = self.out
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -236,7 +246,9 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        s = self.out
+        sum_dout_s = np.sum(dout * s, axis=1, keepdims=True)
+        dx = s * (dout - sum_dout_s)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -254,7 +266,7 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.out = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -277,15 +289,12 @@ class CrossEntropyModule(object):
         TODO:
         Implement forward pass of the module.
         """
-
-        #######################
-        # PUT YOUR CODE HERE  #
-        #######################
-
-        #######################
-        # END OF YOUR CODE    #
-        #######################
-
+        self.x = x
+        self.y = y
+        
+        log_likelihood = -np.log(x[range(len(y)), y])
+        out = np.sum(log_likelihood)
+        
         return out
 
     def backward(self, x, y):
@@ -300,13 +309,6 @@ class CrossEntropyModule(object):
         TODO:
         Implement backward pass of the module.
         """
-
-        #######################
-        # PUT YOUR CODE HERE  #
-        #######################
-
-        #######################
-        # END OF YOUR CODE    #
-        #######################
-
+        dx = x.copy()
+        dx[range(len(y)), y] -= 1
         return dx

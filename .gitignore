@@ -1,0 +1,8 @@
+data/
+*.ipynb
+*.pdf
+*.html
+*.txt
+*.csv
+*.json
+*.pickle
