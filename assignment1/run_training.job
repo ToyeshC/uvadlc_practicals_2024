@@ -14,12 +14,15 @@ set -x  # Enable debug mode for detailed output
 # loading/activating modules
 module load 2023
 module load Anaconda3/2023.07-2
+conda init bash
+source ~/.bashrc
 
 # moving to project directory
 cd /home/scur2640/uvadlc_practicals_2024
 
 # create the environment
 conda activate dl2024
+# pip install 
 
 # running the training script
 python /home/scur2640/uvadlc_practicals_2024/assignment1/train_mlp_numpy.py

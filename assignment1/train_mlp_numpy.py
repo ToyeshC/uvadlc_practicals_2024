@@ -85,12 +85,14 @@ def evaluate_model(model, data_loader):
     #######################
     total_correct = 0
     total_samples = 0
-    for batch in tqdm(data_loader['validation'], desc="Evaluating"):
-        X, y = batch
-        probs = model.forward(X)
-        acc = accuracy(probs, y)
-        total_correct += acc * X.shape[0]
-        total_samples += X.shape[0]
+    for phase in ['validation', 'test']:
+        for batch in tqdm(data_loader[phase], desc=f"Evaluating {phase.capitalize()}"):
+            X, y = batch
+            X = X.reshape(X.shape[0], -1)
+            probs = model.forward(X)
+            acc = accuracy(probs, y)
+            total_correct += acc * X.shape[0]
+            total_samples += X.shape[0]
     avg_accuracy = total_correct / total_samples
     #######################
     # END OF YOUR CODE    #
@@ -161,6 +163,7 @@ def train(hidden_dims, lr, batch_size, epochs, seed, data_dir):
 
         for batch in tqdm(train_loader, desc=f"Training Epoch {epoch+1}/{epochs}"):
             X, y = batch
+            X = X.reshape(X.shape[0], -1)
             logits = model.forward(X)
             loss = loss_module.forward(logits, y)
             epoch_loss += loss

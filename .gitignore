@@ -6,3 +6,5 @@ data/
 *.csv
 *.json
 *.pickle
+
+uvadlc_practicals_2024/assignment1/logs/*
