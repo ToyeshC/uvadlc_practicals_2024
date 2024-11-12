@@ -171,9 +171,10 @@ def train(hidden_dims, lr, batch_size, epochs, seed, data_dir):
             model.backward(dout)
 
             for layer in model.layers:
-                for param_name in ['weight', 'bias']:
-                    if param_name in layer.params:
-                        layer.params[param_name] -= lr * layer.grads[param_name]
+                if hasattr(layer, 'params'):
+                    for param_name in ['weight', 'bias']:
+                        if param_name in layer.params:
+                            layer.params[param_name] -= lr * layer.grads[param_name]
 
             model.clear_cache()
 
@@ -196,8 +197,9 @@ def train(hidden_dims, lr, batch_size, epochs, seed, data_dir):
     test_total = 0
     for batch in tqdm(test_loader, desc="Testing"):
         X, y = batch
-        probs = best_model.forward(X)
-        acc = accuracy(probs, y)
+        X = X.reshape(X.shape[0], -1)
+        logits = best_model.forward(X)
+        acc = accuracy(logits, y)
         test_correct += acc * X.shape[0]
         test_total += X.shape[0]
     test_accuracy = test_correct / test_total

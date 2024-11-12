@@ -22,7 +22,6 @@ cd /home/scur2640/uvadlc_practicals_2024
 
 # create the environment
 conda activate dl2024
-# pip install 
 
 # running the training script
 python /home/scur2640/uvadlc_practicals_2024/assignment1/train_mlp_numpy.py
