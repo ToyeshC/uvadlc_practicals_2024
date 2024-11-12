@@ -55,7 +55,9 @@ def accuracy(predictions, targets):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-
+    preds = torch.argmax(predictions, dim=1)
+    correct = (preds == targets).float()
+    accuracy = correct.mean().item()
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -83,6 +85,20 @@ def evaluate_model(model, data_loader):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
+
+    model.eval()
+    total_correct = 0
+    total_samples = 0
+    with torch.no_grad():
+        for batch in tqdm(data_loader, desc="Evaluating"):
+            X, y = batch
+            X = X.view(X.size(0), -1).to(device)
+            y = y.to(device)
+            outputs = model(X)
+            preds = torch.argmax(outputs, dim=1)
+            total_correct += (preds == y).sum().item()
+            total_samples += y.size(0)
+    avg_accuracy = total_correct / total_samples
 
     #######################
     # END OF YOUR CODE    #
@@ -146,15 +162,58 @@ def train(hidden_dims, lr, use_batch_norm, batch_size, epochs, seed, data_dir):
     #######################
 
     # TODO: Initialize model and loss module
-    model = ...
-    loss_module = ...
-    # TODO: Training loop including validation
-    # TODO: Do optimization with the simple SGD optimizer
-    val_accuracies = ...
-    # TODO: Test best model
-    test_accuracy = ...
-    # TODO: Add any information you might want to save for plotting
-    logging_dict = ...
+    train_loader = cifar10_loader['train']
+    validation_loader = cifar10_loader['validation']
+    test_loader = cifar10_loader['test']
+
+    # Initialize model, loss module, and optimizer
+    model = MLP(n_inputs=3072, n_hidden=hidden_dims, n_classes=10, use_batch_norm=use_batch_norm).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=lr)
+
+    val_accuracies = []
+    best_val_accuracy = 0.0
+    best_model_state = deepcopy(model.state_dict())
+    logging_dict = {'epoch': [], 'val_accuracy': [], 'train_loss': []}
+
+    for epoch in range(epochs):
+        model.train()
+        epoch_loss = 0.0
+
+        for batch in tqdm(train_loader, desc=f"Training Epoch {epoch+1}/{epochs}"):
+            X, y = batch
+            X = X.view(X.size(0), -1).to(device)
+            y = y.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(X)
+            loss = criterion(outputs, y)
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item()
+
+        avg_epoch_loss = epoch_loss / len(train_loader)
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_epoch_loss:.4f}")
+        logging_dict['epoch'].append(epoch+1)
+        logging_dict['train_loss'].append(avg_epoch_loss)
+
+        val_acc = evaluate_model(model, validation_loader, device)
+        val_accuracies.append(val_acc)
+        logging_dict['val_accuracy'].append(val_acc)
+
+        print(f"Validation Accuracy: {val_acc * 100:.2f}%")
+
+        if val_acc > best_val_accuracy:
+            best_val_accuracy = val_acc
+            best_model_state = deepcopy(model.state_dict())
+
+    # Load the best model state
+    model.load_state_dict(best_model_state)
+
+    # Evaluate on the test set
+    test_accuracy = evaluate_model(model, test_loader, device)
+    print(f"Test Accuracy of Best Model: {test_accuracy * 100:.2f}%")
     #######################
     # END OF YOUR CODE    #
     #######################
