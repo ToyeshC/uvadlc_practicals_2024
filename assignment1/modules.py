@@ -242,13 +242,13 @@ class SoftMaxModule(object):
 
         exp = np.exp(x - np.max(x, axis=1, keepdims=True))
 
-        self.out = exp / np.sum(exp, axis=1, keepdims=True)
+        out = exp / np.sum(exp, axis=1, keepdims=True)
 
         #######################
         # END OF YOUR CODE    #
         #######################
 
-        return self.out
+        return out
 
     def backward(self, dout):
         """

@@ -162,12 +162,11 @@ def train(hidden_dims, lr, use_batch_norm, batch_size, epochs, seed, data_dir):
     # PUT YOUR CODE HERE  #
     #######################
 
-    # TODO: Initialize model and loss module
     train_loader = cifar10_loader['train']
     validation_loader = cifar10_loader['validation']
     test_loader = cifar10_loader['test']
 
-    # Initialize model, loss module, and optimizer
+    # TODO: Initialize model and loss module
     model = MLP(n_inputs=3072, n_hidden=hidden_dims, n_classes=10, use_batch_norm=use_batch_norm).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=lr)
@@ -176,43 +175,46 @@ def train(hidden_dims, lr, use_batch_norm, batch_size, epochs, seed, data_dir):
     best_val_accuracy = 0.0
     best_model_state = deepcopy(model.state_dict())
     logging_dict = {'epoch': [], 'val_accuracy': [], 'train_loss': []}
-
+    
+    # TODO: Training loop including validation
+    # TODO: Do optimization with the simple SGD optimizer
+    # TODO: Add any information you might want to save for plotting
     for epoch in range(epochs):
-        model.train()
-        epoch_loss = 0.0
+      model.train()
+      epoch_loss = 0.0
 
-        for batch in tqdm(train_loader, desc=f"Training Epoch {epoch+1}/{epochs}"):
-            X, y = batch
-            X = X.view(X.size(0), -1).to(device)
-            y = y.to(device)
+      for batch in tqdm(train_loader, desc=f"Training Epoch {epoch+1}/{epochs}"):
+        X, y = batch
+        X = X.view(X.size(0), -1).to(device)
+        y = y.to(device)
 
-            optimizer.zero_grad()
-            outputs = model(X)
-            loss = criterion(outputs, y)
-            loss.backward()
-            optimizer.step()
+        optimizer.zero_grad()
+        outputs = model(X)
+        loss = criterion(outputs, y)
+        loss.backward()
+        optimizer.step()
 
-            epoch_loss += loss.item()
+        epoch_loss += loss.item()
 
-        avg_epoch_loss = epoch_loss / len(train_loader)
-        print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_epoch_loss:.4f}")
-        logging_dict['epoch'].append(epoch+1)
-        logging_dict['train_loss'].append(avg_epoch_loss)
+      avg_epoch_loss = epoch_loss / len(train_loader)
+      print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_epoch_loss:.4f}")
 
-        val_acc = evaluate_model(model, validation_loader)
-        val_accuracies.append(val_acc)
-        logging_dict['val_accuracy'].append(val_acc)
+      logging_dict['epoch'].append(epoch+1)
+      logging_dict['train_loss'].append(avg_epoch_loss)
 
-        print(f"Validation Accuracy: {val_acc * 100:.2f}%")
+      val_acc = evaluate_model(model, validation_loader)
+      val_accuracies.append(val_acc)
+      logging_dict['val_accuracy'].append(val_acc)
+      print(f"Validation Accuracy: {val_acc * 100:.2f}%")
 
-        if val_acc > best_val_accuracy:
-            best_val_accuracy = val_acc
-            best_model_state = deepcopy(model.state_dict())
+      if val_acc > best_val_accuracy:
+        best_val_accuracy = val_acc
+        best_model_state = deepcopy(model.state_dict())
 
     # Load the best model state
     model.load_state_dict(best_model_state)
 
-    # Evaluate on the test set
+    # TODO: Test best model
     test_accuracy = evaluate_model(model, test_loader)
     print(f"Test Accuracy of Best Model: {test_accuracy * 100:.2f}%")
     #######################
@@ -249,5 +251,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
     kwargs = vars(args)
 
-    train(**kwargs)
+    model, val_accuracies, test_accuracy, logging_dict = train(**kwargs)
     # Feel free to add any additional functions, such as plotting of the loss curve here
+
+    plt.figure(figsize=(10,5))
+    plt.plot(logging_dict['epoch'], logging_dict['train_loss'], label='Training Loss')
+    plt.plot(logging_dict['epoch'], [acc * 100 for acc in logging_dict['val_accuracy']], label='Validation Accuracy (%)')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss / Accuracy')
+    plt.title('PyTorch Training Loss and Validation Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig('/home/scur2640/uvadlc_practicals_2024/assignment1/plots/pytorch_training_loss_accuracy.png')
+    plt.show()

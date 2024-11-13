@@ -53,13 +53,12 @@ class MLP(object):
         # PUT YOUR CODE HERE  #
         #######################
         self.layers = []
-
-        for i, hidden_dim in enumerate(n_hidden):
-            self.layers.append(LinearModule(n_inputs, hidden_dim, input_layer=(i==0)))
-            self.layers.append(ELUModule(alpha=1.0))
-            n_inputs = hidden_dim
-
-        self.layers.append(LinearModule(n_inputs, n_classes))
+        self.layers.append(LinearModule(n_inputs, n_hidden[0], input_layer=True))
+        self.layers.append(ELUModule(alpha=1.0))
+        for i in range(1, len(n_hidden)):
+          self.layers.append(LinearModule(n_hidden[i-1], n_hidden[i]))
+          self.layers.append(ELUModule(alpha=1.0))
+        self.layers.append(LinearModule(n_hidden[-1], n_classes))
         self.layers.append(SoftMaxModule())
         #######################
         # END OF YOUR CODE    #
@@ -84,7 +83,7 @@ class MLP(object):
         #######################
         out = x
         for layer in self.layers:
-            out = layer.forward(out)
+          out = layer.forward(out)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -106,7 +105,7 @@ class MLP(object):
         # PUT YOUR CODE HERE  #
         #######################
         for layer in reversed(self.layers):
-            dout = layer.backward(dout)
+          dout = layer.backward(dout)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -124,7 +123,7 @@ class MLP(object):
         # PUT YOUR CODE HERE  #
         #######################
         for layer in self.layers:
-            layer.clear_cache()
+          layer.clear_cache()
         #######################
         # END OF YOUR CODE    #
         #######################
