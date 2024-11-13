@@ -33,6 +33,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+import matplotlib.pyplot as plt
+
 
 def accuracy(predictions, targets):
     """
@@ -255,7 +257,7 @@ if __name__ == '__main__':
     # Feel free to add any additional functions, such as plotting of the loss curve here
 
     plt.figure(figsize=(10,5))
-    plt.plot(logging_dict['epoch'], logging_dict['train_loss'], label='Training Loss')
+    # plt.plot(logging_dict['epoch'], logging_dict['train_loss'], label='Training Loss')
     plt.plot(logging_dict['epoch'], [acc * 100 for acc in logging_dict['val_accuracy']], label='Validation Accuracy (%)')
     plt.xlabel('Epoch')
     plt.ylabel('Loss / Accuracy')

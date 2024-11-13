@@ -81,7 +81,6 @@ class LinearModule(object):
         #######################
 
         self.input = x
-
         out = np.dot(x, self.params['weight']) + self.params['bias']
 
         #######################
@@ -110,7 +109,6 @@ class LinearModule(object):
         
         self.grads['weight'] = np.dot(self.input.T, dout) + 0.01 * self.params['weight'] 
         self.grads['bias'] = np.sum(dout, axis=0)
-
         dx = np.dot(dout, self.params['weight'].T)
 
         #######################
@@ -163,7 +161,6 @@ class ELUModule(object):
         #######################
         
         self.input = x
-
         out = np.where(x > 0, x, self.alpha * (np.exp(x) - 1))
       
         #######################
@@ -189,7 +186,6 @@ class ELUModule(object):
         #######################
 
         self.grad = dout
-
         dx = dout * np.where(self.input > 0, 1, self.alpha * np.exp(self.input))
 
         #######################
@@ -239,16 +235,15 @@ class SoftMaxModule(object):
         #######################
 
         self.x = x
-
-        exp = np.exp(x - np.max(x, axis=1, keepdims=True))
-
-        out = exp / np.sum(exp, axis=1, keepdims=True)
+        shifted_x = x - np.max(x, axis=1, keepdims=True)
+        exp_x = np.exp(shifted_x)
+        self.out = exp_x / np.sum(exp_x, axis=1, keepdims=True)
 
         #######################
         # END OF YOUR CODE    #
         #######################
 
-        return out
+        return self.out
 
     def backward(self, dout):
         """
@@ -266,11 +261,9 @@ class SoftMaxModule(object):
         # PUT YOUR CODE HERE  #
         #######################
 
-        out = self.out
-
-        sdout = np.sum(dout * out, axis=1, keepdims=True)
-        
-        dx = out * (dout - sdout)
+        s = self.out
+        sum_dout_s = np.sum(dout * s, axis=1, keepdims=True)
+        dx = s * (dout - sum_dout_s)
 
         #######################
         # END OF YOUR CODE    #
@@ -320,7 +313,8 @@ class CrossEntropyModule(object):
         self.x = x
         self.y = y
 
-        out = -np.sum(-np.log(np.maximum(x[range(x.shape[0]), y], 1e-12))) / x.shape[0]
+        log_likelihood = -np.log(x[range(len(y)), y])
+        out = np.sum(log_likelihood)
 
         #######################
         # END OF YOUR CODE    #
