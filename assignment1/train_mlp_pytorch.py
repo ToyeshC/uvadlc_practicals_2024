@@ -85,7 +85,8 @@ def evaluate_model(model, data_loader):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-
+    
+    device = next(model.parameters()).device  # Get device from model parameters
     model.eval()
     total_correct = 0
     total_samples = 0
@@ -198,7 +199,7 @@ def train(hidden_dims, lr, use_batch_norm, batch_size, epochs, seed, data_dir):
         logging_dict['epoch'].append(epoch+1)
         logging_dict['train_loss'].append(avg_epoch_loss)
 
-        val_acc = evaluate_model(model, validation_loader, device)
+        val_acc = evaluate_model(model, validation_loader)
         val_accuracies.append(val_acc)
         logging_dict['val_accuracy'].append(val_acc)
 
@@ -212,7 +213,7 @@ def train(hidden_dims, lr, use_batch_norm, batch_size, epochs, seed, data_dir):
     model.load_state_dict(best_model_state)
 
     # Evaluate on the test set
-    test_accuracy = evaluate_model(model, test_loader, device)
+    test_accuracy = evaluate_model(model, test_loader)
     print(f"Test Accuracy of Best Model: {test_accuracy * 100:.2f}%")
     #######################
     # END OF YOUR CODE    #
