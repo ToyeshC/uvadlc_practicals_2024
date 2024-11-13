@@ -256,13 +256,24 @@ if __name__ == '__main__':
     model, val_accuracies, test_accuracy, logging_dict = train(**kwargs)
     # Feel free to add any additional functions, such as plotting of the loss curve here
 
-    plt.figure(figsize=(10,5))
-    # plt.plot(logging_dict['epoch'], logging_dict['train_loss'], label='Training Loss')
-    plt.plot(logging_dict['epoch'], [acc * 100 for acc in logging_dict['val_accuracy']], label='Validation Accuracy (%)')
+    # loss
+    plt.figure(figsize=(10, 5))
+    plt.plot(logging_dict['epoch'], logging_dict['train_loss'], label='Training Loss', color='blue')
     plt.xlabel('Epoch')
-    plt.ylabel('Loss / Accuracy')
-    plt.title('PyTorch Training Loss and Validation Accuracy')
+    plt.ylabel('Loss')
+    plt.title('PyTorch Training Loss')
     plt.legend()
     plt.grid(True)
-    plt.savefig('/home/scur2640/uvadlc_practicals_2024/assignment1/plots/pytorch_training_loss_accuracy.png')
+    plt.savefig('/home/scur2640/uvadlc_practicals_2024/assignment1/plots/pytorch_training_loss.png')
+    plt.show()
+
+    # accuracy
+    plt.figure(figsize=(10, 5))
+    plt.plot(logging_dict['epoch'], [acc * 100 for acc in logging_dict['val_accuracy']], label='Validation Accuracy (%)', color='green')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.title('PyTorch Validation Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig('/home/scur2640/uvadlc_practicals_2024/assignment1/plots/pytorch_validation_accuracy.png')
     plt.show()
