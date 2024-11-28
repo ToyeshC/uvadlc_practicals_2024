@@ -8,3 +8,10 @@ We provide to you simple unit tests that can check your implementation. However,
 
 We also provide a Conda environment you can use to install the necessary Python packages.
 In order to use it on Snellius, follow the instructions from our [Snellius guide](https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial1/Lisa_Cluster.html).
+
+
+## Assignment 2
+
+This assignment's implementing exercise is consist of two parts; you can find all the necessary instructions in **assignment_2.pdf** on Canvas and in the README.md file in the directories. 
+
+There is a test file in part 2 that you can use to check your implementation. 
