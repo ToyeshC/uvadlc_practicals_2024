@@ -24,5 +24,5 @@ cd /home/scur2640/uvadlc_practicals_2024
 conda activate dl2024
 
 # running the training script
-python /home/scur2640/uvadlc_practicals_2024/assignment1/train_mlp_pytorch.py
-python /home/scur2640/uvadlc_practicals_2024/assignment1/train_mlp_numpy.py
+python /home/scur2640/uvadlc_practicals_2024/assignment1/train_mlp_pytorch.py --use_batch_norm
+python /home/scur2640/uvadlc_practicals_2024/assignment1/train_mlp_numpy.py --use_batch_norm
