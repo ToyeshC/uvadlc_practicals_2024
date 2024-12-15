@@ -86,7 +86,7 @@ class VAE(pl.LightningModule):
         L_reg = reg_loss.mean()
         
         elbo = recon_loss + reg_loss
-        bpd = elbo_to_bpd(elbo, imgs.shape)
+        bpd = elbo_to_bpd(elbo, imgs.shape).mean()
         
         #######################
         # END OF YOUR CODE    #
