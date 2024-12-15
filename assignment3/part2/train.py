@@ -1,6 +1,6 @@
 from cifar10_models import resnet18
 from utils import load_cifar10, train, test
-from adversarial_attack import test_attack
+from adversarial_attack import test_attack, fgsm_loss, pgd_attack
 from globals import STANDARD, FGSM, PGD, CIFAR10_LABELS, ALPHA, EPSILON, NUM_ITER
 
 import argparse
@@ -29,9 +29,18 @@ def main(args):
             print("Skipping training for standard pretrained model")
         else:
             print("Training model")
-            model = train(model, trainloader, validloader, num_epochs=args.num_epochs, 
-                        defense_strategy=training_strategy, 
-                        defense_args=strategy_args[training_strategy])
+            if training_strategy == FGSM:
+                model = train(model, trainloader, validloader, num_epochs=args.num_epochs, 
+                            defense_strategy=training_strategy, 
+                            defense_args=strategy_args[training_strategy])
+            elif training_strategy == PGD:
+                model = train(model, trainloader, validloader, num_epochs=args.num_epochs, 
+                            defense_strategy=training_strategy, 
+                            defense_args=strategy_args[training_strategy])
+            else:
+                model = train(model, trainloader, validloader, num_epochs=args.num_epochs, 
+                            defense_strategy=training_strategy, 
+                            defense_args=strategy_args[training_strategy])
         
         print("Testing model")
         test(model, testloader)

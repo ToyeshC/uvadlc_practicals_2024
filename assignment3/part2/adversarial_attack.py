@@ -28,9 +28,15 @@ def denormalize(batch, mean=[0.4914, 0.4822, 0.4465], std=[0.247, 0.243, 0.261])
 
 def fgsm_attack(image, data_grad, epsilon = 0.25):
     # Get the sign of the data gradient (element-wise)
+    sign_data_grad = data_grad.sign()
+
     # Create the perturbed image, scaled by epsilon
+    perturbed_image = image + epsilon * sign_data_grad
+
     # Make sure values stay within valid range
-    raise NotImplementedError()
+    perturbed_image = torch.clamp(perturbed_image, min=(0 - torch.tensor([0.4914, 0.4822, 0.4465]).to(image.device))/torch.tensor([0.247, 0.243, 0.261]).to(image.device), 
+                        max=(1 - torch.tensor([0.4914, 0.4822, 0.4465]).to(image.device))/torch.tensor([0.247, 0.243, 0.261]).to(image.device))
+
     return perturbed_image
 
 
@@ -39,14 +45,29 @@ def fgsm_loss(model, criterion, inputs, labels, defense_args, return_preds = Tru
     alpha = defense_args[ALPHA]
     epsilon = defense_args[EPSILON]
     inputs.requires_grad = True
+
     # Implement the FGSM attack
+    original_outputs = model(inputs)
+    original_loss = criterion(original_outputs, labels)
+    _, preds = torch.max(original_outputs, 1)
+
     # Calculate the loss for the original image
+    original_loss.backward()
+    data_grad = inputs.grad.data
+
     # Calculate the perturbation
+    perturbed_data = fgsm_attack(inputs, data_grad, epsilon=epsilon)
+
     # Calculate the loss for the perturbed image
+    adversarial_outputs = model(perturbed_data)
+    adversarial_loss = criterion(adversarial_outputs, labels)
+
     # Combine the two losses
+    loss = original_loss + alpha * adversarial_loss
+
     # Hint: the inputs are used in two different forward passes,
     # so you need to make sure those don't clash
-    raise NotImplementedError()
+
     if return_preds:
         _, preds = torch.max(original_outputs, 1)
         return loss, preds
@@ -66,7 +87,28 @@ def pgd_attack(model, data, target, criterion, args):
     # Hint: to make sure to each time get a new detached copy of the data,
     # to avoid accumulating gradients from previous iterations
     # Hint: it can be useful to use toch.nograd()
-    raise NotImplementedError()     
+    
+    perturbed_data = data.clone().detach()
+    perturbed_data = perturbed_data + torch.empty_like(perturbed_data).uniform_(-epsilon, epsilon)
+    perturbed_data = torch.clamp(perturbed_data, min=(0 - torch.tensor([0.4914, 0.4822, 0.4465]).to(data.device))/torch.tensor([0.247, 0.243, 0.261]).to(data.device), 
+                                         max=(1 - torch.tensor([0.4914, 0.4822, 0.4465]).to(data.device))/torch.tensor([0.247, 0.243, 0.261]).to(data.device))
+    perturbed_data.requires_grad = True
+
+    for _ in range(num_iter):
+        outputs = model(perturbed_data)
+        loss = criterion(outputs, target)
+        model.zero_grad()
+        loss.backward()
+        data_grad = perturbed_data.grad.data
+
+        perturbed_data = perturbed_data + alpha * data_grad.sign()
+        
+        perturbation = torch.clamp(perturbed_data - data, min=-epsilon, max=epsilon)
+        perturbed_data = torch.clamp(data + perturbation, 
+                                     min=(0 - torch.tensor([0.4914, 0.4822, 0.4465]).to(data.device))/torch.tensor([0.247, 0.243, 0.261]).to(data.device), 
+                                     max=(1 - torch.tensor([0.4914, 0.4822, 0.4465]).to(data.device))/torch.tensor([0.247, 0.243, 0.261]).to(data.device)).detach_()
+        perturbed_data.requires_grad = True
+  
     return perturbed_data
 
 
@@ -92,12 +134,17 @@ def test_attack(model, test_loader, attack_function, attack_args):
             # Get the correct gradients wrt the data
             # Perturb the data using the FGSM attack
             # Re-classify the perturbed image
-            raise NotImplementedError()
+
+            perturbed_data = fgsm_attack(data, data_grad, epsilon=attack_args[EPSILON])
+            output_adv = model(perturbed_data)
 
         elif attack_function == PGD:
             # Get the perturbed data using the PGD attack
             # Re-classify the perturbed image
-            raise NotImplementedError()
+
+            perturbed_data = pgd_attack(model, data, target, criterion, attack_args)
+            output_adv = model(perturbed_data)
+        
         else:
             print(f"Unknown attack {attack_function}")
 

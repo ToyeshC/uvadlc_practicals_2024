@@ -104,7 +104,11 @@ def train(model, trainloader, validloader, num_epochs=25, defense_strategy = STA
                         # Get adverserial examples using PGD attack
                         # Add them to the original batch
                         # Make sure the model has the correct labels
-                        raise NotImplementedError()
+
+                        perturbed_data = pgd_attack(model, inputs, labels, criterion, defense_args)
+                        inputs = torch.cat([inputs, perturbed_data], dim=0)
+                        labels = torch.cat([labels, labels], dim=0)
+                        
                         optimizer.zero_grad()
                         outputs = model(inputs)
                         loss = criterion(outputs, labels)
@@ -116,20 +120,20 @@ def train(model, trainloader, validloader, num_epochs=25, defense_strategy = STA
                         loss.backward()
                         optimizer.step()
 
-                # statistics
+                # Statistics
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                running_corrects += torch.sum(preds == labels.data if defense_strategy != PGD else torch.sum(preds[:inputs.size(0)] == labels.data))
             if phase == 'train':
                 scheduler.step()
             if defense_strategy == PGD and phase == 'train':
-                N*=2 #account for adverserial examples
+                N *= 2  # Account for adversarial examples
             epoch_loss = running_loss / N
             epoch_acc = running_corrects.double() / N
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
 
-            # deep copy the model
+            # Deep copy the model
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
@@ -139,7 +143,7 @@ def train(model, trainloader, validloader, num_epochs=25, defense_strategy = STA
         time_elapsed // 60, time_elapsed % 60))
     print('Best val Acc: {:4f}'.format(best_acc))
 
-    # load best model weights
+    # Load best model weights
     model.load_state_dict(best_model_wts)
     return model
 
@@ -163,7 +167,7 @@ def test(model, testloader):
     return correct / total
 
 def imshow(img):
-    img = img / 2 + 0.5  # unnormalize
+    img = img / 2 + 0.5  # Unnormalize
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.savefig('image.png')
