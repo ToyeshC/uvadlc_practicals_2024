@@ -60,7 +60,7 @@ def fgsm_loss(model, criterion, inputs, labels, defense_args, return_preds = Tru
     original_outputs = model(inputs)
     loss = criterion(original_outputs, labels)
     
-    loss.backward()
+    loss.backward(retain_graph=True)
     data_grad = inputs.grad.data
 
     perturbed_inputs = fgsm_attack(inputs, data_grad, epsilon=epsilon)
@@ -142,7 +142,7 @@ def test_attack(model, test_loader, attack_function, attack_args):
         elif attack_function == PGD:
             # Get the perturbed data using the PGD attack
             # Re-classify the perturbed image
-            
+
             perturbed_data = pgd_attack(model, data, target, criterion, args=attack_args)
             output = model(perturbed_data)
             

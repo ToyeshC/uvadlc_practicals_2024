@@ -4,17 +4,24 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=9
 #SBATCH --gpus=1
-#SBATCH --job-name=TrainVAE
+#SBATCH --job-name=part1_zdim2
 #SBATCH --ntasks=1
 #SBATCH --time=02:00:00
 #SBATCH --mem=32000M
-#SBATCH --output=slurm_output_%A.out
+#SBATCH --output=part1_zdim2_%A.out
 
-module purge
-module load 2022
-module load Anaconda3/2022.05
+# loading/activating modules
+module load 2023
+module load Anaconda3/2023.07-2
+module load CUDA
+conda init bash
+source ~/.bashrc
+
+# moving to project directory
+cd /home/scur2640/uvadlc_practicals_2024/assignment3/part1
 
 # Activate your environment
-source activate dl2023
+conda activate dl2024
+
 # Run your code
-srun python -u train_pl.py --data_dir $TMPDIR/ --progress_bar
+srun python -u train_pl.py --data_dir $TMPDIR/ --z_dim 2

@@ -17,6 +17,8 @@
 import torch
 from torchvision.utils import make_grid
 import numpy as np
+from sklearn.decomposition import PCA
+import torch.nn.functional as F
 
 
 def sample_reparameterize(mean, std):
@@ -82,9 +84,9 @@ def elbo_to_bpd(elbo, img_shape):
     # PUT YOUR CODE HERE  #
     #######################
 
-    batch_size = img_shape[0]
-    pixels = np.prod(img_shape[1:])
-    bpd = elbo * np.log2(np.e) / (batch_size * pixels)
+    num_dims = img_shape[1] * img_shape[2] * img_shape[3]
+    log2 = torch.log(torch.tensor(2.0))
+    bpd = elbo / (num_dims * log2)
 
     #######################
     # END OF YOUR CODE    #
@@ -116,17 +118,25 @@ def visualize_manifold(decoder, grid_size=20):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-
-    x = torch.linspace(0.5/grid_size, 1-0.5/grid_size, grid_size)
-    xx, yy = torch.meshgrid(x, x, indexing='ij')
-
-    grid = torch.stack([xx.flatten(), yy.flatten()], dim=1)
-    grid = torch.distributions.Normal(0, 1).icdf(grid)
     
-    imgs = decoder(grid)
-    imgs = torch.sigmoid(imgs)
+    pca = PCA(n_components=2)
+    z_pca = pca.fit_transform(z_space.cpu().numpy())
+    z_pca = torch.from_numpy(z_pca).float().to(z_space.device)
+
+    z_min, z_max = z_pca.min(dim=0).values, z_pca.max(dim=0).values
+    grid_x = torch.linspace(z_min[0], z_max[0], grid_size)
+    grid_y = torch.linspace(z_min[1], z_max[1], grid_size)
     
-    img_grid = make_grid(imgs, nrow=grid_size, normalize=True, value_range=(0,1))
+    z1, z2 = torch.meshgrid(grid_x, grid_y, indexing='ij')
+    z_grid = torch.stack([z1.flatten(), z2.flatten()], dim=1)
+    
+    z_full = torch.zeros(z_grid.size(0), z_space.size(1)).to(z_grid.device)
+    z_full[:, :2] = z_grid
+
+    x_grid = decoder(z_full)
+    x_grid = torch.softmax(x_grid, dim=1)
+    
+    img_grid = make_grid(x_grid.reshape(-1, 1, 28, 28), nrow=grid_size, normalize=True, value_range=(0, 1))
     
     #######################
     # END OF YOUR CODE    #

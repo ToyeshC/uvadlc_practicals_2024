@@ -54,7 +54,7 @@ class CNNEncoder(nn.Module):
         )
         
         self.fc_mu = nn.Linear(2*c_hid*7*7, z_dim)
-        self.fc_log_std = nn.Linear(2*c_hid*7*7, z_dim)
+        self.fc_std = nn.Linear(2*c_hid*7*7, z_dim)
 
         #######################
         # END OF YOUR CODE    #
@@ -73,10 +73,10 @@ class CNNEncoder(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        
+
         x = self.net(x)
         mean = self.fc_mu(x)
-        log_std = self.fc_log_std(x)
+        log_std = self.fc_std(x)
 
         #######################
         # END OF YOUR CODE    #
@@ -105,7 +105,7 @@ class CNNDecoder(nn.Module):
         #######################
 
         c_hid = num_filters
-
+        
         self.linear = nn.Sequential(
             nn.Linear(z_dim, 2*c_hid*7*7),
             nn.GELU()

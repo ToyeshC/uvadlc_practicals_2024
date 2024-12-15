@@ -86,6 +86,7 @@ class VAE(pl.LightningModule):
         L_reg = reg_loss.mean()
         
         elbo = recon_loss + reg_loss
+        
         bpd = elbo_to_bpd(elbo, imgs.shape).mean()
         
         #######################
@@ -107,11 +108,11 @@ class VAE(pl.LightningModule):
         #######################
 
         z = torch.randn(batch_size, self.hparams.z_dim, device=self.device)
-        x_hat = self.decoder(z)
-        
-        probs = F.softmax(x_hat, dim=1)
-        x_samples = torch.multinomial(probs.permute(0, 2, 3, 1).reshape(-1, 16), 1)
-        x_samples = x_samples.reshape(batch_size, 1, 28, 28)
+        logits = self.decoder(z)
+        probs = F.softmax(logits, dim=1)
+        temperature = 0.5
+        probs = probs / temperature
+        x_samples = probs.argmax(dim=1, keepdim=True)
         
         #######################
         # END OF YOUR CODE    #
@@ -275,4 +276,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     train_vae(args)
-
